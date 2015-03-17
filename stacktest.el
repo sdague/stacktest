@@ -90,13 +90,19 @@ present is considered to be a 'project root'.")
 (defvar stacktest-toxcmd "tox"
   "The command to run tests at the top level. Typically tox")
 
-(defvar stacktest-testrunner ".tox/py27/bin/python -m subunit.run"
+(defvar stacktest-subunit-cmd ".tox/py27/bin/python -m subunit.run"
   "What test runner should be run on tests. This defaults to
   using subunit.run directly, which requires use of a filter as
   well. Other options would be to use testtools.run directly,
   which has less useful output")
 
-(defvar stacktest-filter ".tox/py27/bin/subunit-trace"
+(defvar stacktest-testtools-cmd ".tox/py27/bin/python -m testtools.run"
+  "What test runner should be run on tests. This defaults to
+  using subunit.run directly, which requires use of a filter as
+  well. Other options would be to use testtools.run directly,
+  which has less useful output")
+
+(defvar stacktest-subunit-trace ".tox/py27/bin/subunit-trace"
   "What filter to use. subunit-trace is required if we use
   subunit.run to run the tests.")
 
@@ -141,22 +147,23 @@ created." )
 
 (add-to-list 'compilation-finish-functions 'stacktest--finish-function-hook)
 
-(defun run-stacktest (&optional tests debug failed)
+(defun run-stacktest (&optional tests debug pdb)
   "run stacktest"
-  (setq stacktest--last-run-params (list tests debug failed))
+  (setq stacktest--last-run-params (list tests debug pdb))
 
-  (let* ((stacktest (stacktest-find-test-runner))
+  (let* (
          (where (or stacktest-local-project-root (stacktest-find-project-root)))
-         (args (concat ;;; disabling pdb (if debug "--pdb" "")
-                       " "
-                       (if failed "--failed" "")))
+         (testcmd (stacktest-find-test-runner where tests pdb))
+         ;; (args (concat ;;; disabling pdb (if debug "--pdb" "")
+         ;;               " "
+         ;;               (if failed "--failed" "")))
          (tnames (if tests tests ""))
          ; for the venv invocation to work we need to be at the right
          ; starting point so the cd is required.
-         (testrunner (if tests
-                         (format "%s%s" where stacktest-testrunner)
-                       stacktest-tox))
-         (testfilter (if tests (format "| %s%s" where stacktest-filter) ""))
+         (testrunner (if (not (string= testcmd stacktest-toxcmd))
+                         (format "%s%s" where testcmd)
+                       stacktest-toxcmd))
+         (testfilter (if (string= testcmd stacktest-subunit-cmd) (format "| %s%s" where stacktest-subunit-trace) ""))
          )
     (if (not where)
         (error
@@ -169,19 +176,21 @@ created." )
     ;; can invoked from it by the user after execution is complete. This is
     ;; necessary because the compilation buffer doesn't have a filename from
     ;; which it could be discovered.
-    (funcall (lambda (command)
-                  (let ((compilation-error-regexp-alist
-                         '(("  File \"\\(.*\\)\", line \\([0-9]+\\), in test_" 1 2))))
-                    (save-current-buffer
-					  (set-buffer (compilation-start command
-													 nil
-													 (lambda (mode) (concat "*stacktest*"))))
-					  (setq-local stacktest-local-project-root where))))
+    (funcall (if pdb
+                'pdb
+               (lambda (command)
+                 (let ((compilation-error-regexp-alist
+                        '(("  File \"\\(.*\\)\", line \\([0-9]+\\), in test_" 1 2))))
+                   (save-current-buffer
+                     (set-buffer (compilation-start command
+                                                    nil
+                                                    (lambda (mode) (concat "*stacktest*"))))
+                     (setq-local stacktest-local-project-root where)))))
              (format
-              (concat "cd %s && "
+              (concat
                       (if debug "OS_DEBUG=True " "")
-                      "%s %s %s %s")
-              where testrunner args tnames testfilter)))
+                      "%s %s %s")
+              testrunner tnames testfilter)))
   )
 
 (defun stacktest-all (&optional debug failed)
@@ -209,11 +218,11 @@ created." )
   (interactive)
   (stacktest-module t))
 
-(defun stacktest-one (&optional debug)
+(defun stacktest-one (&optional debug pdb)
   "run stacktest (via eggs/bin/test) on testable thing
  at point in current buffer"
   (interactive)
-  (run-stacktest (stacktest-subunit-testable) debug))
+  (run-stacktest (stacktest-subunit-testable) debug pdb))
 
 (defun stacktest-debug-one ()
   "run stacktest (via eggs/bin/test) on testable thing
@@ -221,19 +230,28 @@ created." )
   (interactive)
   (stacktest-one t))
 
+(defun stacktest-pdb-one ()
+  "run stacktest (via eggs/bin/test) on testable thing
+ at point in current buffer using the Python debugger"
+  (interactive)
+  (stacktest-one nil t))
+
 (defun stacktest-again ()
   "runs the most recently executed 'stacktest' command again"
   (interactive)
   (apply 'run-stacktest stacktest--last-run-params))
 
-(defun stacktest-find-test-runner ()
-  (message
-   (let ((result
-		  (reduce '(lambda (x y) (or x y))
-				  (mapcar 'stacktest-find-test-runner-names stacktest-project-names))))
-	 (if result
-		 result
-	   stacktest-global-name))))
+(defun stacktest-find-test-runner (&optional where tests pdb)
+  (cond
+   ; if there are no tests, run tox
+   ((not tests) stacktest-toxcmd)
+   ; if pdb, we need to use testtools
+   (pdb stacktest-testtools-cmd)
+   ; if we have subunit trace, we can use subunit for better output
+   ((file-exists-p (concat where stacktest-subunit-trace)) stacktest-subunit-cmd)
+   ; if that doesn't exist, fall back to testtools
+   (t stacktest-testtools-cmd))
+)
 
 (defun stacktest-find-test-runner-names (runner)
   "find eggs/bin/test in a parent dir of current buffer's file"
