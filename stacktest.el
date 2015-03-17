@@ -147,7 +147,7 @@ created." )
 
 (add-to-list 'compilation-finish-functions 'stacktest--finish-function-hook)
 
-(defun run-stacktest (&optional tests debug pdb)
+(defun run-stacktest (&optional tests debug pdb target)
   "run stacktest"
   (setq stacktest--last-run-params (list tests debug pdb))
 
@@ -163,6 +163,9 @@ created." )
          (testrunner (if (not (string= testcmd stacktest-toxcmd))
                          (format "%s%s" where testcmd)
                        stacktest-toxcmd))
+         (testrunner (if (and (string= testrunner stacktest-toxcmd) target)
+                         (format "%s -e %s" stacktest-toxcmd target)
+                       testrunner))
          (testfilter (if (string= testcmd stacktest-subunit-cmd) (format "| %s%s" where stacktest-subunit-trace) ""))
          )
     (if (not where)
@@ -193,10 +196,15 @@ created." )
               testrunner tnames testfilter)))
   )
 
-(defun stacktest-all (&optional debug failed)
+(defun stacktest-target (target)
+  (interactive "sRun tox target: ")
+  (stacktest-all nil target)
+)
+
+(defun stacktest-all (&optional debug target)
   "run all tests"
   (interactive)
-  (run-stacktest nil debug failed))
+  (run-stacktest nil debug nil target))
 
 (defun stacktest-failed (&optional debug)
   "run stacktest with the --failed option"
