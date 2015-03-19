@@ -154,6 +154,7 @@ created." )
   (let* (
          (where (or stacktest-local-project-root (stacktest-find-project-root)))
          (testcmd (stacktest-find-test-runner where tests pdb))
+         (where (tramp-safe-where where))
          ;; (args (concat ;;; disabling pdb (if debug "--pdb" "")
          ;;               " "
          ;;               (if failed "--failed" "")))
@@ -172,7 +173,6 @@ created." )
         (error
          (format (concat "abort: stacktest couldn't find a project root, "
                          "looked for any of %S") stacktest-project-root-files)))
-
     ;; Execute stacktest and display the result in a compilation buffer.
     ;;
     ;; Store the active project root in a buffer-local variable, so that stacktest
@@ -195,6 +195,14 @@ created." )
                       "%s %s %s")
               testrunner tnames testfilter)))
   )
+
+(defun tramp-safe-where (where)
+  "translate tramp native paths to the actual path only part for remote execution"
+  ; TODO - there must be a built in for this, but it works for now
+  (interactive)
+  (if (string= (substring where 0 4) "/ssh")
+      (car (last (split-string where ":")))
+    where))
 
 (defun stacktest-target (target)
   (interactive "sRun tox target: ")
@@ -219,7 +227,7 @@ created." )
 (defun stacktest-module (&optional debug)
   "run stacktest (via eggs/bin/test) on current buffer"
   (interactive)
-  (run-stacktest buffer-file-name debug))
+  (run-stacktest (tramp-safe-where buffer-file-name) debug))
 
 (defun stacktest-debug-module ()
   "run tests in the current buffer using the Python debugger"
