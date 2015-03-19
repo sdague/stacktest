@@ -36,6 +36,9 @@ extremely useful when iterating on test development. The compilation
 buffer is annotated so that failure points are clickable back into the
 code in question.
 
+This also works over tramp if you are using ssh as your transport,
+through the magic of awesomeness.
+
 Assumptions
 ===========
 
@@ -49,6 +52,5 @@ Futures
 
 Things that would be nice to have (PRs welcomed)
 
-- figure out if there is any way to do this over tramp
 - further enhance the compilation buffer regexp to make it easier to
   understand at a glance
