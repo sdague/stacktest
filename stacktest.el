@@ -35,53 +35,36 @@
 ;;
 ;; (require 'stacktest)
 
-;; ; next line only for people with non-eco non-global test runners
-;; ; (add-to-list 'nose-project-names "my/crazy/runner")
+;; By default, the root of a project is found by looking for a '.tox'
+;; directory. This will indicate that tests were previously run
+;; here. For anything more narrow than a tox target, we use python out
+;; of .tox/py27/bin to live within that venv. Projects that don't
+;; include a py27 venv won't work.
 
-;; Note that if your global nose isn't called "nosetests", then you'll want to
-;; redefine nose-global-name to be the command that should be used.
+;; This is the recommended way to activate stacktest keybindings when
+;; viewing Python files:
 
-;; By default, the root of a project is found by looking for any of the files
-;; 'setup.py', '.hg' and '.git'. You can add files to check for to the file
-;; list:
+;; (add-hook 'python-mode-hook 'stacktest-mode)
+
+;; If you would like to enable pdb tracking you'll also need the following:
 ;;
-;; ; (add-to-list 'nose-project-root-files "something")
-
-;; or you can change the project root test to detect in some other way
-;; whether a directory is the project root:
-;;
-;; ; (setq nose-project-root-test (lambda (dirname) (equal dirname "foo")))
-
-;; If you want dots as output, rather than the verbose output:
-;; (defvar nose-use-verbose nil) ; default is t
-
-;; nose.el adds a minor mode called 'nose' that's currently only used to
-;; manage keybindings and provide a hook for changing the behaviour of
-;; the nose output buffer.
-
-;; This is the recommended way to activate nose keybindings when viewing
-;; Python files:
-
-;; (add-hook 'python-mode-hook (lambda () (nose-mode t)))
-
-;; nose-mode is also activated when nose displays the buffer that shows
-;; the output of nosetests.
+;;   (defun my-shell-mode-hook ()
+;;      (add-hook 'comint-output-filter-functions 'python-pdbtrack-comint-output-filter-function t))
+;;   (add-hook 'shell-mode-hook 'my-shell-mode-hook)
 
 ;; Code like that given below can be used to change nose.el's keybindings.
 ;; The bindings shown are nose.el's default bindings. If you wish to use
 ;; these bindings, then you don't need to include this code in .emacs
 
-;; (define-key nose-mode-map "\C-ca" 'nosetests-all)
-;; (define-key nose-mode-map "\C-cm" 'nosetests-module)
-;; (define-key nose-mode-map "\C-c." 'nosetests-one)
-;; (define-key nose-mode-map "\C-cc" 'nosetests-again)
-;; (define-key nose-mode-map "\C-cpa" 'nosetests-pdb-all)
-;; (define-key nose-mode-map "\C-cpm" 'nosetests-pdb-module)
-;; (define-key nose-mode-map "\C-cp." 'nosetests-pdb-one)
+;; (define-key stacktest-mode-map "\C-ca" 'stacktest-all)
+;; (define-key stacktest-mode-map "\C-cm" 'stacktest-module)
+;; (define-key stacktest-mode-map "\C-c." 'stacktest-one)
+;; (define-key stacktest-mode-map "\C-cc" 'stacktest-again)
+;; (define-key stacktest-mode-map "\C-cpa" 'stacktest-pdb-all)
+;; (define-key stacktest-mode-map "\C-cpm" 'stacktest-pdb-module)
+;; (define-key stacktest-mode-map "\C-cp." 'stacktest-pdb-one)
 
 (require 'cl) ;; for "reduce"
-
-(defvar stacktest-project-names '("eco/bin/test"))
 
 (defvar stacktest-project-root-files '(".tox")
   "A list of file names. A directory with any of the files
