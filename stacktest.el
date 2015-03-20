@@ -200,9 +200,8 @@ created." )
   "translate tramp native paths to the actual path only part for remote execution"
   ; TODO - there must be a built in for this, but it works for now
   (interactive)
-  (if (string= (substring where 0 4) "/ssh")
-      (car (last (split-string where ":")))
-    where))
+  (car (last (split-string where ":")))
+)
 
 (defun stacktest-target (target)
   (interactive "sRun tox target: ")
