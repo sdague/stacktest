@@ -30,6 +30,9 @@ From within a python file you can run any of the following:
   is in pdb
 - M-x stacktest-module : runs all the tests in the current file
 - M-x stacktest-all : runs a full ``tox`` run in an emacs buffer
+- M-x stacktest-target : prompts for and runs a specific ``tox``
+  environment
+- M-x stacktest-again : rerun the last test run
 
 You can bind these to more convenient keys. The various modes are
 extremely useful when iterating on test development. The compilation
@@ -54,3 +57,4 @@ Things that would be nice to have (PRs welcomed)
 
 - further enhance the compilation buffer regexp to make it easier to
   understand at a glance
+- menu available when stacktest-mode enable
