@@ -42,6 +42,22 @@ code in question.
 This also works over tramp if you are using ssh as your transport,
 through the magic of awesomeness.
 
+Screenshots
+===========
+
+A successful stacktest-one run (M-x stacktest-one from the shown
+cursor possition)
+
+.. image:: images/stacktest-success.png
+           :alt: stacktest successful
+
+A failed stacktest-one run. The filenames listed in the traceback are
+linked elements that will open those files at those lines.
+
+.. image:: images/stacktest-fail.png
+           :alt: stacktest failing
+
+
 Assumptions
 ===========
 
