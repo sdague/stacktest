@@ -206,10 +206,10 @@ created." )
   (interactive)
   (stacktest-all t))
 
-(defun stacktest-module (&optional debug)
+(defun stacktest-module (&optional debug pdb)
   "run stacktest (via eggs/bin/test) on current buffer"
   (interactive)
-  (run-stacktest (tramp-safe-where buffer-file-name) debug))
+  (run-stacktest (tramp-safe-where buffer-file-name) debug pdb))
 
 (defun stacktest-debug-module ()
   "run tests in the current buffer using the Python debugger"
@@ -233,6 +233,12 @@ created." )
  at point in current buffer using the Python debugger"
   (interactive)
   (stacktest-one nil t))
+
+(defun stacktest-pdb-module ()
+  "run stacktest (via eggs/bin/test) on testable thing
+ at point in current buffer using the Python debugger"
+  (interactive)
+  (stacktest-module nil t))
 
 (defun stacktest-again ()
   "runs the most recently executed 'stacktest' command again"
