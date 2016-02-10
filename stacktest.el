@@ -136,6 +136,7 @@ created." )
 
   (let* (
          (where (or stacktest-local-project-root (stacktest-find-project-root)))
+         (default-directory where)
          (testcmd (stacktest-find-test-runner where tests pdb))
          (where (tramp-safe-where where))
          ;; (args (concat ;;; disabling pdb (if debug "--pdb" "")
