@@ -130,6 +130,36 @@ created." )
 
 (add-to-list 'compilation-finish-functions 'stacktest--finish-function-hook)
 
+(defun detect-test-runner (fPath)
+  (interactive "ftox filename: \n")
+  (let (myBuffer p1 p2 (ii 0) searchStr)
+
+      (with-temp-buffer
+        (insert-file-contents fPath nil nil nil t)
+        (setq searchStr "py.test" ) ; search string here
+
+        (goto-char 1)
+        (while (search-forward searchStr nil t)
+          (setq ii (1+ ii)))
+
+        ;; report if the occurrence is not n times
+        (when (not (= ii 0))
+          (princ (format "this many: %d %s\n" ii fPath))))))
+
+
+(defun run-my-tests (&optional tests debug pdb target)
+  "run stacktest"
+  (interactive)
+  (setq mytest--last-run-params (list tests debug pdb))
+  (let* (
+         (where (or stacktest-local-project-root (stacktest-find-project-root)))
+         (default-directory where)
+         (testcmd (stacktest-find-test-runner where tests pdb))
+         (where (tramp-safe-where where))
+         )
+    (message "%s %s" where tests)
+    ))
+
 (defun run-stacktest (&optional tests debug pdb target)
   "run stacktest"
   (setq stacktest--last-run-params (list tests debug pdb))
@@ -245,6 +275,11 @@ created." )
   "runs the most recently executed 'stacktest' command again"
   (interactive)
   (apply 'run-stacktest stacktest--last-run-params))
+
+(defun stacktest-which-tester (&optional where tests)
+  (interactive)
+  (message "%s => %s" where tests)
+  )
 
 (defun stacktest-find-test-runner (&optional where tests pdb)
   (cond
